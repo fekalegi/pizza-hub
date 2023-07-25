@@ -1,7 +1,7 @@
 package chef
 
 import (
-	"sync"
+	"math/rand"
 )
 
 type repository struct {
@@ -28,7 +28,7 @@ func (r *repository) Add(req *Chef) int {
 
 	req.ID = len(r.chefs) + 1
 	r.chefs = append(r.chefs, req)
-	return len(r.chefs)
+	return req, len(r.chefs)
 }
 
 func (r *repository) ListChefs() []*Chef {

@@ -11,16 +11,17 @@ import (
 )
 
 func main() {
+	newChefChan := make(chan *chefDomain.Chef)
 
 	chefRepo := chefDomain.NewChefRepository()
-	newChefService := chefDomain.NewChefService(chefRepo)
+	newChefService := chefDomain.NewChefService(chefRepo, newChefChan)
 	chefController := chef.NewChefController(newChefService)
 
 	pizzaRepo := pizzaDomain.NewPizzaRepository()
 	newPizzaService := pizzaDomain.NewPizzaService(pizzaRepo)
 	pizzaController := pizza.NewPizzaController(newPizzaService)
 
-	newOrderService := orderDomain.NewOrderService(chefRepo, pizzaRepo)
+	newOrderService := orderDomain.NewOrderService(chefRepo, pizzaRepo, newChefChan)
 	orderController := order.NewOrderController(newOrderService)
 
 	http.HandleFunc("/api/chef", chefController.RouteHandler)

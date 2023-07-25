@@ -1,12 +1,14 @@
 package chef
 
-type chefImplementation struct {
-	repo Repository
+type ChefImplementation struct {
+	Repo        Repository
+	ChefChannel chan *Chef
 }
 
-func NewChefService(repo Repository) Service {
-	return &chefImplementation{
-		repo: repo,
+func NewChefService(repo Repository, chefChan chan *Chef) Service {
+	return &ChefImplementation{
+		Repo:        repo,
+		ChefChannel: chefChan,
 	}
 }
 

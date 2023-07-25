@@ -19,15 +19,17 @@ var (
 	}
 )
 
-type orderImplementation struct {
-	chefRepo  chef.Repository
-	pizzaRepo pizza.Repository
+type OrderImplementation struct {
+	ChefRepo    chef.Repository
+	PizzaRepo   pizza.Repository
+	ChefChannel chan *chef.Chef
 }
 
-func NewOrderService(chefRepo chef.Repository, pizzaRepo pizza.Repository) Service {
-	return &orderImplementation{
-		chefRepo:  chefRepo,
-		pizzaRepo: pizzaRepo,
+func NewOrderService(chefRepo chef.Repository, pizzaRepo pizza.Repository, chefChannel chan *chef.Chef) Service {
+	return &OrderImplementation{
+		ChefRepo:    chefRepo,
+		PizzaRepo:   pizzaRepo,
+		ChefChannel: chefChannel,
 	}
 }
 
@@ -79,6 +81,18 @@ func (o *orderImplementation) processOrder(chef *chef.Chef, order *Order) {
 		log.Println("chef is done cooking ")
 	}()
 	log.Println("chef is cooking ", order.PizzaType)
+
+	time.Sleep(order.Duration)
+}
+
+func (o *OrderImplementation) processOrder(chef *chef.Chef, order *Order, wg *sync.WaitGroup) {
+	defer func() {
+		//chef.Unlock() // Unlock the chef after processing the order
+		log.Println("chef is done cooking ", chef.ID)
+		o.ChefChannel <- chef
+		wg.Done()
+	}()
+	log.Println("chef", chef.ID, "is cooking ", order.PizzaType)
 
 	time.Sleep(order.Duration)
 }
