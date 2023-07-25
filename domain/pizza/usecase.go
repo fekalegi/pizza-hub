@@ -1,12 +1,12 @@
 package pizza
 
-type pizzaImplementation struct {
-	repo Repository
+type PizzaImplementation struct {
+	Repo Repository
 }
 
 func NewPizzaService(repo Repository) Service {
-	return &pizzaImplementation{
-		repo: repo,
+	return &PizzaImplementation{
+		Repo: repo,
 	}
 }
 
@@ -15,10 +15,10 @@ type Service interface {
 	GetAllMenu() []Pizza
 }
 
-func (p *pizzaImplementation) GetMenuByKey(req string) *Pizza {
-	return p.repo.GetMenuByKey(req)
+func (p *PizzaImplementation) GetMenuByKey(req string) *Pizza {
+	return p.Repo.GetMenuByKey(req)
 }
 
-func (p *pizzaImplementation) GetAllMenu() []Pizza {
-	return p.repo.GetAllMenu()
+func (p *PizzaImplementation) GetAllMenu() []Pizza {
+	return p.Repo.GetAllMenu()
 }

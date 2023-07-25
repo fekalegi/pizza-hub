@@ -13,9 +13,13 @@ func NewChefService(repo Repository, chefChan chan *Chef) Service {
 }
 
 type Service interface {
-	Add(req *Chef) int
+	Add() (*Chef, int)
 }
 
-func (c *chefImplementation) Add(req *Chef) int {
-	return c.repo.Add(req)
+func (c *ChefImplementation) Add() (*Chef, int) {
+	newChef, total := c.Repo.Add()
+	go func() {
+		c.ChefChannel <- newChef
+	}()
+	return newChef, total
 }

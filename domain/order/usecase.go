@@ -9,16 +9,6 @@ import (
 	"time"
 )
 
-var (
-	chefsMutex sync.Mutex
-
-	chefPool = sync.Pool{
-		New: func() interface{} {
-			return &chef.Chef{}
-		},
-	}
-)
-
 type OrderImplementation struct {
 	ChefRepo    chef.Repository
 	PizzaRepo   pizza.Repository
@@ -37,52 +27,34 @@ type Service interface {
 	PlaceOrder(pizzaType string) error
 }
 
-func (o *orderImplementation) PlaceOrder(pizzaType string) error {
-	p := o.pizzaRepo.GetMenuByKey(pizzaType)
+func (o *OrderImplementation) PlaceOrder(pizzaType string) error {
+	p := o.PizzaRepo.GetMenuByKey(pizzaType)
 	if p == nil {
 		return common.ErrSelectedMenuDoesntExist
 	}
 
-	chefs := o.chefRepo.ListChefs()
+	chefs := o.ChefRepo.ListChefs()
 	totalChefs := len(chefs)
 	if totalChefs == 0 {
 		return common.ErrNoAvailableChefs
 	}
 
+	availChef := <-o.ChefChannel
+	newOrders := &Order{
+		PizzaType: pizzaType,
+		Duration:  p.Duration,
+	}
+
+	var wg sync.WaitGroup
+
 	go func() {
-		newOrder := new(Order)
-		newOrder.PizzaType = pizzaType
-		newOrder.Duration = p.Duration
-
-		availableChefs := make(chan *chef.Chef, len(chefs))
-		for _, chef := range chefs {
-			availableChefs <- chef
-		}
-
-		// Process orders using available chefs concurrently
-		for {
-			select {
-			case chef := <-availableChefs:
-				go func() {
-					o.processOrder(chef, newOrder)
-					availableChefs <- chef // Return the chef to the pool
-				}()
-			}
-		}
+		wg.Add(1)
+		o.processOrder(availChef, newOrders, &wg)
 	}()
+
+	wg.Wait()
 
 	return nil
-}
-
-func (o *orderImplementation) processOrder(chef *chef.Chef, order *Order) {
-	chef.Lock()
-	defer func() {
-		chef.Unlock() // Unlock the chef after processing the order
-		log.Println("chef is done cooking ")
-	}()
-	log.Println("chef is cooking ", order.PizzaType)
-
-	time.Sleep(order.Duration)
 }
 
 func (o *OrderImplementation) processOrder(chef *chef.Chef, order *Order, wg *sync.WaitGroup) {
